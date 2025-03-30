@@ -1,0 +1,34 @@
+# Ignore the entire build directory
+build/
+
+# Ignore any temporary files created during compilation
+*.o
+*.so
+*.a
+*.out
+*.log
+*.tmp
+
+# Ignore dependency files
+*.d
+*.dep
+*.dwo
+
+# Ignore editor and OS-generated files
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Ignore CMake and Makefile output if applicable
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+
+# Ignore Yocto build output (if relevant)
+tmp/
+sstate-cache/
+cache/
+deploy/
+
