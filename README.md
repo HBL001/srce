@@ -1,30 +1,45 @@
 ## Using the Toolchain ##
 
-To utilize your wrlinux_toolchain.cmake file for cross-compiling your C++ code in the ~/wrlinux-source directory using CMake, follow these steps:
+To utilize your AM335x toolchain.cmake file for cross-compiling your C++ code in the ~/srce directory using CMake, follow these steps:
 
 ### 1. Ensure the Toolchain File is Correct:
 
-Your wrlinux_toolchain.cmake file should accurately define the cross-compilation environment. Here's an example configuration:
+Your arm32.cmake file should accurately define the cross-compilation environment. Here's an example configuration:
 
 ```
-# Specify the target system name and architecture
+# Define the system name and processor architecture
+SET(CMAKE_SYSTEM_PROCESSOR cortex-a8)
 set(CMAKE_SYSTEM_NAME Linux)
-set(CMAKE_SYSTEM_PROCESSOR arm)
+#set(CMAKE_SYSTEM_PROCESSOR arm)
 
-# Define the cross compiler executables
-set(CMAKE_C_COMPILER arm-wrs-linux-gnueabi-gcc)
-set(CMAKE_CXX_COMPILER arm-wrs-linux-gnueabi-g++)
+# If SDK_ROOT is not defined, use a default path
+if(NOT DEFINED SDK_ROOT)
+    set(SDK_ROOT "/opt/poky/5.1.4")
+endif()
 
-# Specify the sysroot path
-set(CMAKE_SYSROOT /opt/wrlinux-toolchain/sysroots/armv7at2hf-neon-wrs-linux-gnueabi)
+# Set target sysroot
+set(SYSROOT "${SDK_ROOT}/sysroots/cortexa8hf-neon-poky-linux-gnueabi")
 
-# Adjust the search paths for the compiler
-set(CMAKE_FIND_ROOT_PATH ${CMAKE_SYSROOT})
+# Set compilers using full SDK paths
+set(CMAKE_C_COMPILER   "${SDK_ROOT}/sysroots/x86_64-pokysdk-linux/usr/bin/arm-poky-linux-gnueabi/arm-poky-linux-gnueabi-gcc")
+set(CMAKE_CXX_COMPILER "${SDK_ROOT}/sysroots/x86_64-pokysdk-linux/usr/bin/arm-poky-linux-gnueabi/arm-poky-linux-gnueabi-g++")
 
-# Configure the find commands to search only in the specified paths
+# Set the sysroot explicitly
+set(CMAKE_SYSROOT "${SYSROOT}")
+
+# Tell CMake to search headers/libraries only in the sysroot
+set(CMAKE_FIND_ROOT_PATH "${SYSROOT}")
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+
+# Optional: Set flags explicitly if CMake has trouble detecting them
+set(CMAKE_C_FLAGS   "--sysroot=${SYSROOT} -O2 -march=armv7-a -mfpu=neon -mfloat-abi=hard")
+set(CMAKE_CXX_FLAGS "--sysroot=${SYSROOT} -O2 -march=armv7-a -mfpu=neon -mfloat-abi=hard")
+
+# intellisense 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ```
 
@@ -36,7 +51,7 @@ Navigate to your build directory and run CMake, specifying your toolchain file:
 cd ~/wrlinux-source
 mkdir build
 cd build
-cmake -DCMAKE_TOOLCHAIN_FILE=../wrlinux_toolchain.cmake ..
+cmake -DCMAKE_TOOLCHAIN_FILE=../arm32.cmake ..
 
 ```
 This command directs CMake to use the specified toolchain file for configuring the project.
@@ -71,7 +86,7 @@ project-root/
 │   └── CMakeLists.txt
 ├── include/
 │   └── project_name/
-│       └── header.hpp
+│       └── header.h
 ├── build/
 └── tests/
     ├── test_main.cpp
@@ -91,23 +106,19 @@ This file orchestrates the build process. Here's an example:
 
 ```
 cmake_minimum_required(VERSION 3.10)
+project(MyProject)
 
-# Project name and version
-project(CoreScanSoftware VERSION 0.1 LANGUAGES CXX C)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_executable(mainCode src/main.cpp)
 
-# Specify the toolchain file for cross-compilation
-set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/cmake/wrlinux_toolchain.cmake)
+#add_subdirectory(InstrumentSoftware)
 
-# Add subdirectories
-add_subdirectory(src)
-add_subdirectory(tests)
-
-# Enable testing
-enable_testing()
+# Use the toolchain file for cross-compilation
+if(CMAKE_CROSSCOMPILING)
+    message(STATUS "Cross-compiling Yocto SDK")
+endif()
 ```
 
 4. src/CMakeLists.txt
@@ -132,14 +143,16 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include
 To build your project using the specified toolchain:
 
 ```
-# Navigate to the build directory
-cd /home/user/wrlinux-source/build
+cmake_minimum_required(VERSION 3.10)
 
-# Run CMake with the toolchain file
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../cmake/wrlinux_toolchain.cmake
+# Specify the toolchain file for cross-compilation
+set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/arm32.cmake)
 
-# Build the project
-make
+project(MyEmbeddedApp CXX)
+
+# Add your executable (adjust source file names as needed)
+add_executable(my_main src/main.cpp)
+
 ```
 
 
