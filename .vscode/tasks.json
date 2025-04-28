@@ -1,31 +1,33 @@
 {
-    "version": "2.0.0",
-    "tasks": [
+  "version": "2.0.0",
+  "tasks": [
       {
-        "type": "cppbuild",
-        "label": "C/C++: Build active file with Yocto SDK",
-        "command": "/opt/poky/5.0.9/sysroots/x86_64-pokysdk-linux/usr/bin/arm-poky-linux-gnueabi/arm-poky-linux-gnueabi-g++",
-        "args": [
-          "-fdiagnostics-color=always",
-          "-g",
-          "-march=armv7-a",
-          "-mfpu=neon",
-          "-mfloat-abi=hard",
-          "--sysroot=/opt/poky/5.0.9/sysroots/cortexa8hf-neon-poky-linux-gnueabi",
-          "${file}",
-          "-o",
-          "${fileDirname}/${fileBasenameNoExtension}"
-        ],
-        "options": {
-          "cwd": "${fileDirname}"
-        },
-        "problemMatcher": ["$gcc"],
-        "group": {
-          "kind": "build",
-          "isDefault": true
-        },
-        "detail": "Build using Yocto SDK cross-compiler"
+          "label": "CMake: Configure and Build",
+          "type": "shell",
+          "command": "cmake",
+          "args": [
+              "-B", "build",
+              "-S", ".",
+              "-DCMAKE_TOOLCHAIN_FILE=arm32.cmake"
+          ],
+          "group": {
+              "kind": "build",
+              "isDefault": true
+          },
+          "problemMatcher": []
+      },
+      {
+          "label": "CMake: Build",
+          "type": "shell",
+          "command": "cmake",
+          "args": [
+              "--build", "build"
+          ],
+          "group": {
+              "kind": "build",
+              "isDefault": false
+          },
+          "problemMatcher": []
       }
-    ]
-  }
-  
+  ]
+}
