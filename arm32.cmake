@@ -5,7 +5,7 @@ set(CMAKE_SYSTEM_NAME Linux)
 
 # If SDK_ROOT is not defined, use a default path
 if(NOT DEFINED SDK_ROOT)
-    set(SDK_ROOT "/opt/poky/5.0.4")
+    set(SDK_ROOT "/opt/poky/5.0.9")
 endif()
 
 # Set target sysroot
