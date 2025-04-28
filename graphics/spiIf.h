@@ -6,7 +6,6 @@
  #ifndef SPI_IF_H
  #define SPI_IF_H
  
- #include <cstdint>
  #include <linux/types.h>
  #include <linux/spi/spidev.h>
  

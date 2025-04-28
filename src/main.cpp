@@ -1,4 +1,5 @@
 #include<cstdio>
+#include<ft800.h>
 
 int main()
 {

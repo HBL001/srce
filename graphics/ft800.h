@@ -1,16 +1,13 @@
 /*!
  * \file ft800.h
- * \brief FT800 Main header file
+ * \brief FT800 display control header file
  */
 
  #ifndef FT800_H
  #define FT800_H
  
- #include <cstdint>
-
  #include "ft800If.h"
  
-
  class Ft800
  {
  public:
@@ -41,7 +38,9 @@
          OPT_NOHM = 16384,
          OPT_NOPOINTER = 16384,
          OPT_NOSECS = 32768,
-         OPT_NOHANDS = 49152
+         OPT_NOHANDS = 49152,
+         OPT_RIGHTX_CENTERY = (2048 | 1024),
+         OPT_LEFTX_TOPY = OPT_3D
      } option_t;
  
      typedef enum
@@ -80,10 +79,13 @@
          ORBIT
      } spinner_style_t;
  
+     static const uint8_t maximum_user_handle = 13;
+     static const uint8_t vertical_text_internal_handle = 14;
+ 
      Ft800 (uint8_t bus_number, uint8_t channel_number);
      ~Ft800 (void);
  
-     bool initialise (void);
+     bool initialise (bool force = true, uint8_t red = 0x00, uint8_t green = 0x00, uint8_t blue = 0x00);
  
      void cmd_dlstart (void);
      void cmd_swap (void);
@@ -98,35 +100,80 @@
      void display (void);
  
      void color_rgb (uint8_t red, uint8_t green, uint8_t blue);
+     void color_alpha (uint8_t alpha);
+ 
+     void cmd_bgcolor (uint32_t rgb);
+     void cmd_fgcolor (uint32_t rgb);
  
      void cmd_text (uint16_t x, uint16_t y, uint16_t font, option_t option, const char* string);
      void cmd_button (uint16_t x, uint16_t y, uint16_t width, int16_t height, uint16_t font, option_t option, const char* string);
+     void cmd_keys (uint16_t x, uint16_t y, uint16_t width, int16_t height, uint16_t font, option_t option, const char* string);
+     void cmd_keys (uint16_t x, uint16_t y, uint16_t width, int16_t height, uint16_t font, char pressed, const char* string);
      void cmd_spinner (uint16_t x, uint16_t y, spinner_style_t style, uint16_t scale);
  
      void load_bitmap (uint32_t ram_g_offset, const uint8_t* bitmap, size_t length);
+     void cmd_inflate (uint32_t ram_g_offset, const uint8_t* bitmap, size_t length);
+     void bitmap_handle (uint8_t handle);
      void bitmap_source (uint32_t ram_g_offset);
      void bitmap_layout (bitmap_format_t format, uint16_t stride, uint16_t height);
      void bitmap_size (filter_t filter, wrap_t wrap_x, wrap_t wrap_y, uint16_t width, uint16_t height);
      void begin_bitmap (void);
+     void begin_point (void);
+     void begin_line (void);
+     void begin_line_strip (void);
+     void begin_rectangle (void);
      void end (void);
+     void vertex2f (int32_t x, int32_t y);
      void vertex2ii (uint16_t x, uint16_t y, uint8_t handle, uint8_t cell);
      void tag (uint8_t value);
+ 
+     void point_size (uint16_t size);
+     void line_width (uint16_t width);
+ 
+     void cmd_macro (uint8_t macro_id);
+     void set_macro_color_rgb (uint8_t macro_id, uint8_t red, uint8_t green, uint8_t blue);
  
      bool get_touch_raw_xy (uint16_t* x, uint16_t* y);
      bool get_touch_screen_xy (uint16_t* x, uint16_t* y);
      bool get_touch_tag (uint8_t* tag);
  
+     void vertical_text (uint16_t x, uint16_t y, uint8_t font, const char* string);
+ 
+     void configure_keyclick (uint16_t sound_code);
+     void key_click (void);
+ 
+     void mute_sound (void);
+     void unmute_sound (void);
+ 
+     void set_backlight (uint8_t percent);
+ 
  private:
      static const uint32_t dlstart_command = 0xffffff00;
      static const uint32_t dlswap_command = 0xffffff01;
+     static const uint32_t background_colour_command = 0xffffff09;
+     static const uint32_t foreground_colour_command = 0xffffff0a;
      static const uint32_t text_command = 0xffffff0c;
      static const uint32_t button_command = 0xffffff0d;
+     static const uint32_t keys_command = 0xffffff0e;
      static const uint32_t calibrate_command = 0xffffff15;
      static const uint32_t spinner_command = 0xffffff16;
+     static const uint32_t inflate_command = 0xffffff22;
+     static const uint32_t load_identity_command = 0xffffff26;
+     static const uint32_t set_matrix_command = 0xffffff2a;
+     static const uint32_t translate_command = 0xffffff27;
+     static const uint32_t rotate_command = 0xffffff29;
  
      static const uint32_t command_fifo_size = 4096;
  
+     static const uint8_t vertical_font_not_initialised = 255;
+ 
      Ft800_interface ft800_interface;
+ 
+     bool display_initialised;
+     uint16_t write_index;
+     uint16_t keyclick_code;
+ 
+     uint8_t vertical_font;
  
      bool write_command_32_bit (uint32_t value);
      bool write_command_string (const char *string);
@@ -136,10 +183,8 @@
  
      bool fifo_empty (void);
  
-     bool display_initialised;
-     uint16_t write_index;
+     bool test_registers_initialised (void);
  };
  
  #endif
- 
  
