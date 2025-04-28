@@ -1,10 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+# src/CMakeLists.txt
+add_library(src_main main.cpp)
 
-# Specify the toolchain file for cross-compilation
-set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/arm32.cmake)
-
-project(MyEmbeddedApp CXX)
-
-# Add your executable (adjust source file names as needed)
-add_executable(my_main main.cpp)
-
+#FOR NOW THIS IS DEFUNCT
