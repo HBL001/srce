@@ -1,0 +1,22 @@
+{
+    "name": "AM335x SDK DevContainer",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "am335x-sdk",
+    "workspaceFolder": "/workspace",
+    "remoteUser": "root",
+    "shutdownAction": "none", // Prevents VS Code from stopping the container
+    "customizations": {
+      "vscode": {
+        "settings": {
+          "terminal.integrated.defaultProfile.linux": "bash"
+        },
+        "extensions": [
+          "ms-vscode.cpptools",
+          "ms-vscode.cmake-tools",
+          "twxs.cmake"
+        ]
+      }
+    },
+    "overrideCommand": false, // Ensures the container's default command is used
+    "postCreateCommand": "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=/workspace/arm32.cmake"
+  }

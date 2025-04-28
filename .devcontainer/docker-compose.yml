@@ -1,0 +1,10 @@
+services:
+  am335x-sdk:
+    image: clotspot/am335x-sdk:latest
+    container_name: am335x-sdk
+    stdin_open: true
+    tty: true
+    command: ["/bin/bash", "-c", "source /opt/poky/5.0.9/environment-setup-cortexa8hf-neon-poky-linux-gnueabi && exec /bin/bash"]
+    volumes:
+      - /home/user/srce:/workspace # Mount your project directory to /workspace in the container
+    working_dir: /workspace # Set the working directory inside the container
