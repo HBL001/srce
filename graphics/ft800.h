@@ -1,6 +1,6 @@
 /*!
  * \file ft800.h
- * \brief FT800 display control header file
+ * \brief FT800 Display Control Header File
  */
 
  #ifndef FT800_H
@@ -8,10 +8,14 @@
  
  #include "ft800If.h"
  
+ /*!
+  * \class Ft800
+  * \brief High-level driver for controlling the FT800 display controller, graphics, and touch interface.
+  */
  class Ft800
  {
  public:
- 
+     //! Calibration data for touchscreen
      typedef struct
      {
          uint32_t transform_a;
@@ -22,27 +26,29 @@
          uint32_t transform_f;
      } calibration_stc_t;
  
+     //! Options for text rendering, buttons, and widgets
      typedef enum
      {
-         OPT_3D = 0,
-         OPT_MONO = 1,
-         OPT_NODL = 2,
-         OPT_SIGNED = 256,
-         OPT_FLAT = 256,
-         OPT_CENTERX = 512,
-         OPT_CENTERY = 1024,
-         OPT_CENTER = 1536,
-         OPT_RIGHTX = 2048,
-         OPT_NOBACK = 4096,
-         OPT_NOTICKS = 8192,
-         OPT_NOHM = 16384,
+         OPT_3D        = 0,
+         OPT_MONO      = 1,
+         OPT_NODL      = 2,
+         OPT_SIGNED    = 256,
+         OPT_FLAT      = 256,
+         OPT_CENTERX   = 512,
+         OPT_CENTERY   = 1024,
+         OPT_CENTER    = 1536,
+         OPT_RIGHTX    = 2048,
+         OPT_NOBACK    = 4096,
+         OPT_NOTICKS   = 8192,
+         OPT_NOHM      = 16384,
          OPT_NOPOINTER = 16384,
-         OPT_NOSECS = 32768,
-         OPT_NOHANDS = 49152,
+         OPT_NOSECS    = 32768,
+         OPT_NOHANDS   = 49152,
          OPT_RIGHTX_CENTERY = (2048 | 1024),
-         OPT_LEFTX_TOPY = OPT_3D
+         OPT_LEFTX_TOPY    = OPT_3D
      } option_t;
  
+     //! Bitmap formats used in load_bitmap
      typedef enum
      {
          ARGB1555 = 0,
@@ -59,18 +65,21 @@
          BARGRAPH
      } bitmap_format_t;
  
+     //! Filtering modes for bitmaps
      typedef enum
      {
-         NEAREST= 0,
+         NEAREST = 0,
          BILINEAR
      } filter_t;
  
+     //! Wrapping modes for bitmaps
      typedef enum
      {
          BORDER = 0,
          REPEAT
      } wrap_t;
  
+     //! Spinner styles
      typedef enum
      {
          CIRCLE = 0,
@@ -82,109 +91,92 @@
      static const uint8_t maximum_user_handle = 13;
      static const uint8_t vertical_text_internal_handle = 14;
  
-     Ft800 (uint8_t bus_number, uint8_t channel_number);
-     ~Ft800 (void);
+     // -- Constructor / Destructor --
+     Ft800(uint8_t bus_number, uint8_t channel_number);
+     ~Ft800(void);
  
-     bool initialise (bool force = true, uint8_t red = 0x00, uint8_t green = 0x00, uint8_t blue = 0x00);
+     // -- Device and Display List Control --
+     int initialise(bool force = true, uint8_t red = 0x00, uint8_t green = 0x00, uint8_t blue = 0x00);
+     void cmd_dlstart(void);
+     void cmd_swap(void);
+     void cmd_calibrate(void);
+     int calibration_complete(calibration_stc_t &calibration);
+     void set_calibration(calibration_stc_t &calibration);
  
-     void cmd_dlstart (void);
-     void cmd_swap (void);
+     // -- Display List Commands --
+     void clear_color_rgb(uint8_t red, uint8_t green, uint8_t blue);
+     void clear(uint8_t color, uint8_t stencil, uint8_t tag);
+     void display(void);
  
-     void cmd_calibrate (void);
-     bool calibration_complete (calibration_stc_t &calibration);
+     void color_rgb(uint8_t red, uint8_t green, uint8_t blue);
+     void color_alpha(uint8_t alpha);
  
-     void set_calibration (calibration_stc_t &calibration);
+     void cmd_bgcolor(uint32_t rgb);
+     void cmd_fgcolor(uint32_t rgb);
  
-     void clear_color_rgb (uint8_t red, uint8_t green, uint8_t blue);
-     void clear (uint8_t color, uint8_t stencil, uint8_t tag);
-     void display (void);
+     void cmd_text(uint16_t x, uint16_t y, uint16_t font, option_t option, const char* string);
+     void cmd_button(uint16_t x, uint16_t y, uint16_t width, int16_t height, uint16_t font, option_t option, const char* string);
+     void cmd_keys(uint16_t x, uint16_t y, uint16_t width, int16_t height, uint16_t font, option_t option, const char* string);
+     void cmd_keys(uint16_t x, uint16_t y, uint16_t width, int16_t height, uint16_t font, char pressed, const char* string);
+     void cmd_spinner(uint16_t x, uint16_t y, spinner_style_t style, uint16_t scale);
  
-     void color_rgb (uint8_t red, uint8_t green, uint8_t blue);
-     void color_alpha (uint8_t alpha);
+     // -- Bitmap Management --
+     void load_bitmap(uint32_t ram_g_offset, const uint8_t* bitmap, size_t length);
+     void cmd_inflate(uint32_t ram_g_offset, const uint8_t* bitmap, size_t length);
+     void bitmap_handle(uint8_t handle);
+     void bitmap_source(uint32_t ram_g_offset);
+     void bitmap_layout(bitmap_format_t format, uint16_t stride, uint16_t height);
+     void bitmap_size(filter_t filter, wrap_t wrap_x, wrap_t wrap_y, uint16_t width, uint16_t height);
  
-     void cmd_bgcolor (uint32_t rgb);
-     void cmd_fgcolor (uint32_t rgb);
+     // -- Primitive Drawing --
+     void begin_bitmap(void);
+     void begin_point(void);
+     void begin_line(void);
+     void begin_line_strip(void);
+     void begin_rectangle(void);
+     void end(void);
+     void vertex2f(int32_t x, int32_t y);
+     void vertex2ii(uint16_t x, uint16_t y, uint8_t handle, uint8_t cell);
+     void tag(uint8_t value);
  
-     void cmd_text (uint16_t x, uint16_t y, uint16_t font, option_t option, const char* string);
-     void cmd_button (uint16_t x, uint16_t y, uint16_t width, int16_t height, uint16_t font, option_t option, const char* string);
-     void cmd_keys (uint16_t x, uint16_t y, uint16_t width, int16_t height, uint16_t font, option_t option, const char* string);
-     void cmd_keys (uint16_t x, uint16_t y, uint16_t width, int16_t height, uint16_t font, char pressed, const char* string);
-     void cmd_spinner (uint16_t x, uint16_t y, spinner_style_t style, uint16_t scale);
+     void point_size(uint16_t size);
+     void line_width(uint16_t width);
  
-     void load_bitmap (uint32_t ram_g_offset, const uint8_t* bitmap, size_t length);
-     void cmd_inflate (uint32_t ram_g_offset, const uint8_t* bitmap, size_t length);
-     void bitmap_handle (uint8_t handle);
-     void bitmap_source (uint32_t ram_g_offset);
-     void bitmap_layout (bitmap_format_t format, uint16_t stride, uint16_t height);
-     void bitmap_size (filter_t filter, wrap_t wrap_x, wrap_t wrap_y, uint16_t width, uint16_t height);
-     void begin_bitmap (void);
-     void begin_point (void);
-     void begin_line (void);
-     void begin_line_strip (void);
-     void begin_rectangle (void);
-     void end (void);
-     void vertex2f (int32_t x, int32_t y);
-     void vertex2ii (uint16_t x, uint16_t y, uint8_t handle, uint8_t cell);
-     void tag (uint8_t value);
+     void cmd_macro(uint8_t macro_id);
+     void set_macro_color_rgb(uint8_t macro_id, uint8_t red, uint8_t green, uint8_t blue);
  
-     void point_size (uint16_t size);
-     void line_width (uint16_t width);
+     // -- Touchscreen Handling --
+     int get_touch_raw_xy(uint16_t* x, uint16_t* y);
+     int get_touch_screen_xy(uint16_t* x, uint16_t* y);
+     int get_touch_tag(uint8_t* tag);
  
-     void cmd_macro (uint8_t macro_id);
-     void set_macro_color_rgb (uint8_t macro_id, uint8_t red, uint8_t green, uint8_t blue);
+     void vertical_text(uint16_t x, uint16_t y, uint8_t font, const char* string);
  
-     bool get_touch_raw_xy (uint16_t* x, uint16_t* y);
-     bool get_touch_screen_xy (uint16_t* x, uint16_t* y);
-     bool get_touch_tag (uint8_t* tag);
+     // -- Sound Management --
+     void configure_keyclick(uint16_t sound_code);
+     void key_click(void);
+     void mute_sound(void);
+     void unmute_sound(void);
  
-     void vertical_text (uint16_t x, uint16_t y, uint8_t font, const char* string);
- 
-     void configure_keyclick (uint16_t sound_code);
-     void key_click (void);
- 
-     void mute_sound (void);
-     void unmute_sound (void);
- 
-     void set_backlight (uint8_t percent);
+     // -- Backlight Management --
+     void set_backlight(uint8_t percent);
  
  private:
      static const uint32_t dlstart_command = 0xffffff00;
      static const uint32_t dlswap_command = 0xffffff01;
      static const uint32_t background_colour_command = 0xffffff09;
-     static const uint32_t foreground_colour_command = 0xffffff0a;
-     static const uint32_t text_command = 0xffffff0c;
-     static const uint32_t button_command = 0xffffff0d;
-     static const uint32_t keys_command = 0xffffff0e;
-     static const uint32_t calibrate_command = 0xffffff15;
-     static const uint32_t spinner_command = 0xffffff16;
-     static const uint32_t inflate_command = 0xffffff22;
-     static const uint32_t load_identity_command = 0xffffff26;
-     static const uint32_t set_matrix_command = 0xffffff2a;
-     static const uint32_t translate_command = 0xffffff27;
-     static const uint32_t rotate_command = 0xffffff29;
+     static const uint32_t foreground_colour_command = 0xffffff0A;
+     static const uint32_t cmd_calibrate_command = 0xffffff15;
+     static const uint32_t cmd_inflate_command = 0xffffff22;
+     static const uint32_t cmd_text_command = 0xffffff0C;
+     static const uint32_t cmd_button_command = 0xffffff0D;
+     static const uint32_t cmd_keys_command = 0xffffff0E;
+     static const uint32_t cmd_spinner_command = 0xffffff16;
+     static const uint32_t cmd_fgcolor_command = 0xffffff0A;
+     static const uint32_t cmd_bgcolor_command = 0xffffff09;
  
-     static const uint32_t command_fifo_size = 4096;
- 
-     static const uint8_t vertical_font_not_initialised = 255;
- 
-     Ft800_interface ft800_interface;
- 
-     bool display_initialised;
-     uint16_t write_index;
-     uint16_t keyclick_code;
- 
-     uint8_t vertical_font;
- 
-     bool write_command_32_bit (uint32_t value);
-     bool write_command_string (const char *string);
-     bool write_command_buffer (const uint8_t* buffer, size_t length);
- 
-     void update_fifo_write_pointer (size_t size);
- 
-     bool fifo_empty (void);
- 
-     bool test_registers_initialised (void);
+     Ft800_interface ft800_interface; //!< Low-level FT800 SPI interface
  };
  
- #endif
+ #endif // FT800_H
  
