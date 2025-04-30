@@ -15,6 +15,9 @@ set(SYSROOT "${SDK_ROOT}/sysroots/cortexa8hf-neon-poky-linux-gnueabi")
 set(CMAKE_C_COMPILER   "${SDK_ROOT}/sysroots/x86_64-pokysdk-linux/usr/bin/arm-poky-linux-gnueabi/arm-poky-linux-gnueabi-gcc")
 set(CMAKE_CXX_COMPILER "${SDK_ROOT}/sysroots/x86_64-pokysdk-linux/usr/bin/arm-poky-linux-gnueabi/arm-poky-linux-gnueabi-g++")
 
+# add the libraries into the executable
+# set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc")
+
 # Set the sysroot explicitly
 set(CMAKE_SYSROOT "${SYSROOT}")
 

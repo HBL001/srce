@@ -1,12 +1,18 @@
 /*!
- * \file touch_buttons.h
- * \brief GUI Touch Buttons interface header file
+ * \file touch.h
+ * \brief GUI Touch Buttons interface for FT800 interaction
  */
 
- #include <ft800.h>
  #ifndef TOUCH_BUTTONS_H
  #define TOUCH_BUTTONS_H
  
+ #include "ft800.h"
+ #include <cstddef>
+
+ /*!
+  * \class Touch_buttons
+  * \brief Manages touch button input using FT800 touch tag register
+  */
  class Touch_buttons
  {
  public:
@@ -27,34 +33,54 @@
      static const uint8_t button_released_tag = 254;
      static const uint8_t untagged_icon_tag = 255;
  
-     Touch_buttons (Ft800 &ft800);
+     /*!
+      * \brief Constructor
+      * \param ft800 Reference to initialized Ft800 display instance
+      */
+     Touch_buttons(Ft800& ft800);
  
-     ~Touch_buttons (void);
+     ~Touch_buttons();
  
-     uint8_t poll_touch_buttons (void);
+     /*!
+      * \brief Poll for any pressed or released button tag
+      * \return Tag of detected button or 254 for release, 0 for none
+      */
+     uint8_t poll_touch_buttons();
  
-     bool button_pressed (uint8_t tag);
-     uint8_t active_button (void);
+     /*!
+      * \brief Check if a specific tag is currently pressed
+      * \param tag Tag value to query
+      * \return true if that tag is actively pressed
+      */
+     bool button_pressed(uint8_t tag);
  
-     void discard_active_button (void);
+     /*!
+      * \brief Get the tag of the current active button
+      * \return Tag or no_tag if none is active
+      */
+     uint8_t active_button();
+ 
+     /*!
+      * \brief Discard any current active button without reporting it
+      */
+     void discard_active_button();
  
  private:
- 
-     typedef enum
+     /*!
+      * \brief Finite state machine for debouncing and holding touch buttons
+      */
+     enum button_state_t
      {
          NO_BUTTON,
          DEBOUNCE,
          BUTTON_DETECTED,
          DISCARD_BUTTON
-     } button_state_t;
+     };
  
      Ft800& ft800;
- 
      button_state_t button_state;
- 
      uint8_t last_touch_tag;
-     bool touch_tag_detected;
  };
  
- #endif
+ #endif // TOUCH_BUTTONS_H
  

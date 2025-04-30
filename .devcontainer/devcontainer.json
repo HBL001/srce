@@ -18,5 +18,5 @@
       }
     },
     "overrideCommand": false, // Ensures the container's default command is used
-    "postCreateCommand": "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=/workspace/arm32.cmake"
+    "postCreateCommand": "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=/workspace/arm32.cmake "
   }

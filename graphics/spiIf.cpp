@@ -1,225 +1,143 @@
 /*!
- * \file spi_if.h
- * \brief SPI Interface implementation
+ * \file spiIf.cpp
+ * \brief SPI Interface implementation for Linux spidev with safe embedded design
  */
 
- #include <stdint.h>
- #include <stdio.h>
- #include <stdlib.h>
- #include <string.h>
- #include <unistd.h>
- #include <fcntl.h>
- #include <sys/ioctl.h>
- #include <linux/types.h>
- #include <linux/spi/spidev.h>
- 
  #include "spiIf.h"
+
+ #include <fcntl.h>
+ #include <unistd.h>
+ #include <sys/ioctl.h>
+ #include <cstring>
+ #include <cstdio>
  
- Spi_interface::Spi_interface (uint8_t bus_number, uint8_t channel_number, uint8_t mode, uint32_t speed, uint8_t bits_per_word)
+ Spi_interface::Spi_interface(uint8_t bus_number, uint8_t channel_number,
+                              uint8_t mode, uint32_t speed, uint8_t bits_per_word)
  {
-     initialise (bus_number, channel_number, mode, speed, bits_per_word);
+     initialise(bus_number, channel_number, mode, speed, bits_per_word);
  }
  
- Spi_interface::Spi_interface (uint8_t bus_number, uint8_t channel_number)
+ Spi_interface::Spi_interface(uint8_t bus_number, uint8_t channel_number)
  {
-     initialise (bus_number, channel_number, default_mode, default_speed, default_bits_per_word);
+     initialise(bus_number, channel_number, default_mode, default_speed, default_bits_per_word);
  }
  
- Spi_interface::~Spi_interface (void)
+ Spi_interface::~Spi_interface()
  {
-     disable ();
+     disable();
  }
  
- bool Spi_interface::enable (void)
- {
-     bool result = false;
- 
-     disable ();
- 
-     device_fd = open (device_name, O_RDWR);
- 
-     if (-1 != device_fd)
-     {
-         if ((-1 != ioctl (device_fd, SPI_IOC_WR_MODE, &spi_mode)) &&
-             (-1 != ioctl (device_fd, SPI_IOC_WR_BITS_PER_WORD, &spi_bits_per_word)) &&
-             (-1 != ioctl (device_fd, SPI_IOC_WR_MAX_SPEED_HZ, &spi_speed)))
-         {
-             result = true;
-         }
-         else
-         {
-             disable ();
-         }
-     }
- 
-     return result;
- }
- 
- bool Spi_interface::disable (void)
- {
-     bool result = true;
- 
-     if (-1 != device_fd)
-     {
-         close (device_fd);
-         device_fd = -1;
-     }
- 
-     return result;
- }
- 
- bool Spi_interface::write (const uint8_t* tx_buffer, uint32_t tx_length)
- {
-     bool result = false;
- 
-     if ((-1 != device_fd) &&
-         (NULL != tx_buffer) &&
-         (0 != tx_length))
-     {
-         transfer_structs[0].tx_buf = (unsigned long)tx_buffer;
-         transfer_structs[0].rx_buf = (unsigned long)NULL;
-         transfer_structs[0].len = tx_length;
-         if (-1 != ioctl (device_fd, SPI_IOC_MESSAGE(1), transfer_structs))
-         {
-             result = true;
-         }
-     }
-     
-     return result;
- }
- 
- bool Spi_interface::transfer (const uint8_t* tx_buffer, uint8_t* rx_buffer, uint32_t tx_rx_length)
- {
-     bool result = false;
- 
-     if ((-1 != device_fd) &&
-         (NULL != tx_buffer) &&
-         (NULL != rx_buffer) &&
-         (0 != tx_rx_length))
-     {
-         transfer_structs[0].tx_buf = (unsigned long)tx_buffer;
-         transfer_structs[0].rx_buf = (unsigned long)rx_buffer;
-         transfer_structs[0].len = tx_rx_length;
-         if (-1 != ioctl (device_fd, SPI_IOC_MESSAGE(1), transfer_structs))
-         {
-             result = true;
-         }
-     }
-     
-     return result;
- }
- 
- bool Spi_interface::write_then_read (const uint8_t* tx_buffer, uint32_t tx_length, uint8_t* rx_buffer, uint32_t rx_length)
- {
-     bool result = false;
- 
-     if ((-1 != device_fd) &&
-         (NULL != tx_buffer) &&
-         (0 != tx_length) &&
-         (NULL != rx_buffer) &&
-         (0 != rx_length))
-     {
-         transfer_structs[0].tx_buf = (unsigned long)tx_buffer;
-         transfer_structs[0].rx_buf = (unsigned long)NULL;
-         transfer_structs[0].len = tx_length;
-         transfer_structs[1].tx_buf = (unsigned long)NULL;
-         transfer_structs[1].rx_buf = (unsigned long)rx_buffer;
-         transfer_structs[1].len = rx_length;
-         if (-1 != ioctl (device_fd, SPI_IOC_MESSAGE(2), transfer_structs))
-         {
-             result = true;
-         }
-     }
-     
-     return result;
- }
- 
- void Spi_interface::initialise (uint8_t bus_number, uint8_t channel_number, uint8_t mode, uint32_t speed, uint8_t bits_per_word)
+ void Spi_interface::initialise(uint8_t bus_number, uint8_t channel_number,
+                                uint8_t mode, uint32_t speed, uint8_t bits_per_word)
  {
      spi_mode = mode;
      spi_speed = speed;
      spi_bits_per_word = bits_per_word;
  
-     // Set default 
-     memset (&transfer_structs, 0, sizeof (transfer_structs));
-     transfer_structs[0].delay_usecs = 0;
-     transfer_structs[0].speed_hz = spi_speed;
-     transfer_structs[0].bits_per_word = spi_bits_per_word;
-     transfer_structs[1].delay_usecs = 0;
-     transfer_structs[1].speed_hz = spi_speed;
-     transfer_structs[1].bits_per_word = spi_bits_per_word;
- 
-     snprintf (device_name, sizeof (device_name), "/dev/spidev%hhu.%hhu", bus_number, channel_number);
+     snprintf(device_name, sizeof(device_name), "/dev/spidev%u.%u", bus_number, channel_number);
      device_fd = -1;
+ 
+     std::memset(&transfer_structs, 0, sizeof(transfer_structs));
  }
  
- #ifdef PERFORM_SPI_TESTS
- int main (void)
+ /*!
+  * \brief Opens and configures the SPI device.
+  * \return 0 on success, -1 on failure
+  */
+ int Spi_interface::enable()
  {
-     int ret = 0;
+     device_fd = open(device_name, O_RDWR);
+     if (device_fd < 0) return -1;
  
-     Spi_interface spi_interface (1, 0);
+     if (ioctl(device_fd, SPI_IOC_WR_MODE, &spi_mode) < 0) return -1;
+     if (ioctl(device_fd, SPI_IOC_WR_BITS_PER_WORD, &spi_bits_per_word) < 0) return -1;
+     if (ioctl(device_fd, SPI_IOC_WR_MAX_SPEED_HZ, &spi_speed) < 0) return -1;
  
-     if (spi_interface.enable ())
-     {
-         uint8_t tx[] = {
-             0x00, 0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-             0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x21, 0xFF, 0xFF,
-             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-             0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF,
-             0xDE, 0xAD, 0xBE, 0xEF, 0xBA, 0xAD, 0xF0, 0x0D
-         };
-         uint8_t rx[sizeof (tx)] = {0, };
- 
-         if (spi_interface.transfer (tx, rx, sizeof (rx)))
-         {
-             for (size_t count = 0; count < sizeof (rx); count++)
-             {
-                 if (7 == (count % 8))
-                 {
-                     printf ("0x%02hhX\n", rx[count]);
-                 }
-                 else
-                 {
-                     printf ("0x%02hhX ", rx[count]);
-                 }
-             }
-         }
-         else
-         {
-             printf ("SPI transfer failed\n");
-         }
- 
-         uint8_t wr_buf[] = {'w', 'r', 'i', 't', 'e', ' ', 'b', 'u', 'f'};
-         if (spi_interface.write (wr_buf, sizeof (wr_buf)))
-         {
-             printf ("SPI Write passed\n");
-         }
-         else
-         {
-             printf ("SPI Write failed\n");
-         }
- 
-         uint8_t rd_buf[] = {'r', 'e', 'a', 'd', ' ', 'b', 'u', 'f'};
-         if (spi_interface.write_then_read (wr_buf, sizeof (wr_buf), rd_buf, sizeof (rd_buf)))
-         {
-             for (size_t count = 0; count < sizeof (rd_buf); count++)
-             {
-                 printf ("0x%02hhX ", rd_buf[count]);
-             }
-             printf ("\n");
-         }
-         else
-         {
-             printf ("SPI Write-then-Read failed\n");
-         }
-     }
-     else
-     {
-         printf ("Failed to enable SPI interface\n");
-     }
- 
-     return ret;
+     return 0;
  }
- #endif
+ 
+ /*!
+  * \brief Closes the SPI device if open.
+  * \return 0 (always succeeds)
+  */
+ int Spi_interface::disable()
+ {
+     if (device_fd >= 0) {
+         close(device_fd);
+         device_fd = -1;
+     }
+     return 0;
+ }
+ 
+ /*!
+  * \brief Writes raw data over SPI.
+  * \param tx_buffer Pointer to buffer to send
+  * \param tx_length Length of buffer
+  * \return 0 on success, -1 on failure
+  */
+ int Spi_interface::write(const uint8_t* tx_buffer, uint32_t tx_length)
+ {
+     if (device_fd < 0 || tx_buffer == nullptr || tx_length == 0) return -1;
+ 
+     struct spi_ioc_transfer xfer{};
+     xfer.tx_buf = reinterpret_cast<__u64>(tx_buffer);
+     xfer.rx_buf = 0;
+     xfer.len = tx_length;
+     xfer.speed_hz = spi_speed;
+     xfer.bits_per_word = spi_bits_per_word;
+ 
+     return (ioctl(device_fd, SPI_IOC_MESSAGE(1), &xfer) >= 0) ? 0 : -1;
+ }
+ 
+ /*!
+  * \brief Simultaneously send and receive data over SPI.
+  * \param tx_buffer Pointer to transmit buffer
+  * \param rx_buffer Pointer to receive buffer
+  * \param length Number of bytes to transfer
+  * \return 0 on success, -1 on failure
+  */
+ int Spi_interface::transfer(const uint8_t* tx_buffer, uint8_t* rx_buffer, uint32_t length)
+ {
+     if (device_fd < 0 || tx_buffer == nullptr || rx_buffer == nullptr || length == 0) return -1;
+ 
+     struct spi_ioc_transfer xfer{};
+     xfer.tx_buf = reinterpret_cast<__u64>(tx_buffer);
+     xfer.rx_buf = reinterpret_cast<__u64>(rx_buffer);
+     xfer.len = length;
+     xfer.speed_hz = spi_speed;
+     xfer.bits_per_word = spi_bits_per_word;
+ 
+     return (ioctl(device_fd, SPI_IOC_MESSAGE(1), &xfer) >= 0) ? 0 : -1;
+ }
+ 
+ /*!
+  * \brief Perform a two-step write-then-read SPI transaction.
+  * \param tx_buffer Pointer to buffer to write
+  * \param tx_length Number of bytes to write
+  * \param rx_buffer Pointer to buffer to read into
+  * \param rx_length Number of bytes to read
+  * \return 0 on success, -1 on failure
+  */
+ int Spi_interface::write_then_read(const uint8_t* tx_buffer, uint32_t tx_length,
+                                    uint8_t* rx_buffer, uint32_t rx_length)
+ {
+     if (device_fd < 0 || tx_buffer == nullptr || rx_buffer == nullptr ||
+         tx_length == 0 || rx_length == 0) return -1;
+ 
+     struct spi_ioc_transfer xfers[2]{};
+ 
+     xfers[0].tx_buf = reinterpret_cast<__u64>(tx_buffer);
+     xfers[0].rx_buf = 0;
+     xfers[0].len = tx_length;
+     xfers[0].speed_hz = spi_speed;
+     xfers[0].bits_per_word = spi_bits_per_word;
+ 
+     xfers[1].tx_buf = 0;
+     xfers[1].rx_buf = reinterpret_cast<__u64>(rx_buffer);
+     xfers[1].len = rx_length;
+     xfers[1].speed_hz = spi_speed;
+     xfers[1].bits_per_word = spi_bits_per_word;
+ 
+     return (ioctl(device_fd, SPI_IOC_MESSAGE(2), xfers) >= 0) ? 0 : -1;
+ }
  
