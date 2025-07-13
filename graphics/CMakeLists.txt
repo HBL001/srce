@@ -2,23 +2,18 @@
 
 # List source files
 set(GRAPHICS_SRC
-    ft800.cpp
-    ft800If.cpp
-    spiIf.cpp
-    touch.cpp
+    graph_ft800.cpp
+    graph_touch.cpp
 )
-
-# List public headers (for IDEs and install/export targets)
+    
 set(GRAPHICS_HEADERS
-    ft800.h
-    ft800If.h
-    spiIf.h
-    touch.h
-    ft800Reg.h
-    ft800Formats.h
-    ft800_constants.h
-    device_definitions.h
-)
+    graph_ft800.h
+    graph_ft800_ioctl.h
+    graph_ft800Reg.h
+    graph_ft800Formats.h
+    graph_ft800_constants.h
+    graph_touch.h
+    )
 
 # Create static library target
 add_library(graphics_lib STATIC ${GRAPHICS_SRC} ${GRAPHICS_HEADERS})

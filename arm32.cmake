@@ -35,3 +35,4 @@ set(CMAKE_CXX_FLAGS "--sysroot=${SYSROOT} -O2 -march=armv7-a -mfpu=neon -mfloat-
 # intellisense 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+message(STATUS "Using toolchain file: ${CMAKE_TOOLCHAIN_FILE}")

@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Add subdirectories
-add_subdirectory(graphics)
+#add_subdirectory(graphics)
 add_subdirectory(src)
 
 # Cross-compiling notice
