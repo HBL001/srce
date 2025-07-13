@@ -1,3 +1,11 @@
+// 8 bit read and write test
+
+// root@beaglebone-yocto:/home/user# ./Test
+// ft800 spi0.0: ft800_wr8: tx=[90 24 8C AA] addr=0x10248C v=0xAA
+// ft800 spi0.0: ft800_rd16: addr=0x10248C rx=[42 AA 00] val=0x00AA
+// ft800 spi0.0: ft800_rd8: addr=0x10248C tmp=0x00AA => v=0xAA
+// GPIO_DIR=0xAA
+
 #include <cstdio>
 #include <fcntl.h>
 #include <sys/ioctl.h>
